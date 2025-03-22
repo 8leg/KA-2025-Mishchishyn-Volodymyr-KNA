@@ -9,12 +9,8 @@
 org 100h
 
 start:
-    mov ax, @data   ; good ol' data segment
-    mov ds, ax
 
-    call getFileName
-    mov [di], '$'
-    mov si, offset file
+    lea si, msg
     call print_message
 
 exit:
@@ -22,7 +18,7 @@ exit:
     int 21h
 
 print_message proc
-    mov dx, [si]
+    lea dx, [si]
     mov ah, 09h
     int 21h
     ret
