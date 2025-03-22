@@ -3,14 +3,16 @@
     temp16 dw ?   ; used for 16-bit registry holding
     msg db '24', 0Dh, 0Ah, '$'
     baseData db ?
-    file db 20 dup(0)   ; stores the name of a file that our batch script gave us
+    file db ?   ; stores the name of a file that our batch script gave us
 .code
 
 org 100h
 
 start:
 
-    lea si, msg
+    call getFileName
+    mov byte ptr [di], '$'
+    lea si, file
     call print_message
 
 exit:
@@ -18,7 +20,7 @@ exit:
     int 21h
 
 print_message proc
-    lea dx, [si]
+    mov dx, si
     mov ah, 09h
     int 21h
     ret
@@ -76,15 +78,15 @@ getFileName proc
     mov si, bx  ; pointer to where PSP starts
     lea di, file; pointer to where we are in file var
     add si, 80h
-    mov cx, [si]; a pretty neat pointer optimisation: just load all into si and then add and inc. Nice
-    cmp cx, 0
+    mov cl, [si]; a pretty neat pointer optimisation: just load all into si and then add and inc. Nice
+    cmp cl, 0
     je exit
     inc si
 copyName:
-    mov ax, [si]
+    mov al, [si]
     cmp al, 0dh
     je gotFile
-    mov [di], al
+    mov byte ptr [di], al
     inc si
     inc di
     loop copyName
