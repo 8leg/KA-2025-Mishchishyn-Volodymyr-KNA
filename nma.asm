@@ -26,6 +26,16 @@ saveRegs proc
     push temp
     ret
 saveRegs endp
-    
+
+loadRegs proc
+    pop temp
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    push temp
+    ret
+loadRegs endp
+
 msg db '24', 0Dh, 0Ah, '$'
 end start
