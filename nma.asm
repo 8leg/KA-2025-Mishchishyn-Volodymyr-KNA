@@ -1,8 +1,8 @@
 .model tiny
 .data
     temp16 dw ?   ; used for 16-bit registry holding
-    msg db '24', 0Dh, 0Ah, '$'
-    fileData db 32768 dup(?)
+    msg db 256 dup(?)
+    fileData db 32769 dup(?)
     file db 20 dup(?)   ; stores the name of a file that our batch script gave us
 .code
 
@@ -16,20 +16,31 @@ getFilename:
     inc si
 	cmp al, 20h     ; those both set flags so why not do it like that?
     cmp al, 0Dh     ; carriage return and space both deliminate (I know clever words) so yeah
-    je printRes
+    je openFile
     mov [di], ax
     inc di
     jmp getFilename
-
-printRes:
+openFile:
+    mov al, 0
+    lea dx, file
+    mov ah, 3Dh
+    int 21h
+    jc exit
+readFile:
+    XCHG ax, bx
+    mov cx, 32768
+    lea  dx, fileData
+    mov ah, 3Fh
+    int 21h
+exit:
+    mov byte ptr [di], '$'
+    mov di, dx
+    add di, ax
     mov byte ptr [di], '$'
     lea si, file
     call print_message
-
-
-
-
-exit:
+    lea si, fileData
+    call print_message
     mov ax, 4C00h
     int 21h
 
