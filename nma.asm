@@ -3,14 +3,14 @@
     temp16 dw ?   ; used for 16-bit registry holding
     msg db '24', 0Dh, 0Ah, '$'
     baseData db ?
-    file db ?   ; stores the name of a file that our batch script gave us
+    file db 20 dup(?)   ; stores the name of a file that our batch script gave us
 .code
 
 org 100h
 
 start:
 
-    call getFileName
+    call getFile
     mov byte ptr [di], '$'
     lea si, file
     call print_message
@@ -72,26 +72,20 @@ getToData proc
     ret
 getToData endp
 
-getFileName proc
-    mov ah, 62h ; chatGPT helped me with understanding PSP and some ideas in this segment are from him, but no code copied
-    int 21h
-    mov si, bx  ; pointer to where PSP starts
-    lea di, file; pointer to where we are in file var
-    add si, 80h
-    mov cl, [si]; a pretty neat pointer optimisation: just load all into si and then add and inc. Nice
-    cmp cl, 0
-    je exit
+getFile proc
+    lea di, file
+    mov si, 82h
+begin:
+    mov ax, ds:[si] ; this line was killing me for a lot of time, but Claude told me more about indexing. Thanks mate
     inc si
-copyName:
-    mov al, [si]
-    cmp al, 0dh
-    je gotFile
-    mov byte ptr [di], al
-    inc si
+	cmp al, 20h ; those both set flags so why not do it like that?
+    cmp al, 0Dh ; carriage return and space both deliminate so yeah
+    je cont
+    mov [di], ax
     inc di
-    loop copyName
-gotFile:
+    jmp begin
+cont:
     ret
-getFileName endp
+getFile endp
 
 end start
