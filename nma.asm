@@ -1,9 +1,10 @@
 .model tiny
 .data
-    temp16 dw ?   ; used for 16-bit registry holding
-    msg db 256 dup(?)
-    fileData db 32769 dup(?)
+    temp8 dw ?  ; used for temp data
+    templen db 8 dup(?)
+    line db 32768 dup (0)
     file db 20 dup(?)   ; stores the name of a file that our batch script gave us
+    len dw 0    ; lentght of line
 .code
 
 org 100h
@@ -26,20 +27,35 @@ openFile:
     mov ah, 3Dh
     int 21h
     jc exit
-readFile:
-    XCHG ax, bx
-    mov cx, 32768
-    lea  dx, fileData
+readingSpecs:
+    xchg ax, bx
+    mov cx, 8
+    lea dx, templen
     mov ah, 3Fh
+readLen:
+    int 21h
+    mov al, [templen+4]
+    cmp [templen+5], 0
+    je readLine
+    mul [templen+5]
+    sub ax, 2
+readLine:
+    mov cx, ax
+    mov len, ax
+    mov ah, 3Fh
+    lea dx, line
+    int 21h
+
+closeFile:
+    mov ah, 3Eh
     int 21h
 exit:
     mov byte ptr [di], '$'
-    mov di, dx
-    add di, ax
-    mov byte ptr [di], '$'
+    lea di, line
+    mov [line+24], '$'
     lea si, file
     call print_message
-    lea si, fileData
+    lea si, line
     call print_message
     mov ax, 4C00h
     int 21h
@@ -50,34 +66,5 @@ print_message proc
     int 21h
     ret
 print_message endp
-
-saveRegs proc
-    pop temp16
-    push ax
-    push bx
-    push cx
-    push dx
-    push temp16
-    ret
-saveRegs endp
-
-loadRegs proc
-    pop temp16
-    pop dx
-    pop cx
-    pop bx
-    pop ax
-    push temp16
-    ret
-loadRegs endp
-
-clearRegs proc
-    xor ax, ax
-    xor bx, bx
-    xor cx, cx
-    xor dx, dx
-    xor si, si
-    xor di, di
-clearRegs endp
 
 end start
