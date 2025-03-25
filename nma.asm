@@ -3,6 +3,7 @@
     temp8 dw ?  ; used for temp data
     templen db 8 dup(?)
     line db 32768 dup (0)
+    drum db 1024 dup(0) ; it's called drum, inspired by revolver drums. Used to store the commands
     file db 20 dup(?)   ; stores the name of a file that our batch script gave us
     len dw 0    ; lentght of line
 .code
@@ -45,7 +46,7 @@ readLine:
     mov ah, 3Fh
     lea dx, line
     int 21h
-
+skipTwo:
 closeFile:
     mov ah, 3Eh
     int 21h
