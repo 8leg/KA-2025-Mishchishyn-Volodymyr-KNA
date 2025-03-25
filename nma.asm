@@ -4,6 +4,7 @@
     templen db 8 dup(?)
     line db 32768 dup (0)
     drum db 1024 dup(0) ; it's called drum, inspired by revolver drums. Used to store the commands
+    payloadBuffer 2048 dup(?)   ; used to store the commands before they are loaded to buffer
     file db 20 dup(?)   ; stores the name of a file that our batch script gave us
     len dw 0    ; lentght of line
 .code
@@ -39,6 +40,7 @@ readLen:
     cmp [templen+5], 0
     je readLine
     mul [templen+5]
+    jo exit ; overflow check
     sub ax, 2
 readLine:
     mov cx, ax
@@ -46,7 +48,12 @@ readLine:
     mov ah, 3Fh
     lea dx, line
     int 21h
-skipTwo:
+loadBuffer:
+    lea dx, payloadBuffer
+    mov cx, 2048
+    mov ah, 3Fh
+    int 21h
+loadAmmo:
 closeFile:
     mov ah, 3Eh
     int 21h
