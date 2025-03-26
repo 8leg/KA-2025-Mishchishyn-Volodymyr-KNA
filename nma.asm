@@ -1,11 +1,10 @@
 .model tiny
 .data
-    temp8 dw ?  ; used for temp data
+    temp8 db ?  ; used for temp data
     templen db 8 dup(?)
     line db 32768 dup (0)
-    drum db 1024 dup(0) ; it's called drum, inspired by revolver drums. Used to store the commands
-    payloadBuffer 2048 dup(?)   ; used to store the commands before they are loaded to buffer
-    file db 20 dup(?)   ; stores the name of a file that our batch script gave us
+    drum db 31986 dup (0)   ; it's called drum, inspired by revolver drums. Used to store the commands. 31986 is the biggest possible size rules can have in NMA file
+    file db 11 dup(?)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
     len dw 0    ; lentght of line
 .code
 
@@ -15,9 +14,9 @@ start:
     lea di, file
     mov si, 82h     ; 82 because there is two more useless symbols in memory as can be seen in dump
 getFilename:
-    mov ax, ds:[si] ; this line was killing me, but Claude told me more about ds indexing. Thanks mate
+    mov ax, ds:[si]
     inc si
-	cmp al, 20h     ; those both set flags so why not do it like that?
+    cmp al, 20h     ; those both set flags so why not do it like that?
     cmp al, 0Dh     ; carriage return and space both deliminate (I know clever words) so yeah
     je openFile
     mov [di], ax
@@ -41,19 +40,24 @@ readLen:
     je readLine
     mul [templen+5]
     jo exit ; overflow check
-    sub ax, 2
 readLine:
+    sub ax, 2
     mov cx, ax
     mov len, ax
     mov ah, 3Fh
     lea dx, line
     int 21h
-loadBuffer:
-    lea dx, payloadBuffer
-    mov cx, 2048
+loadAmmoSpecs:
+    lea di, drum
+    lea dx, temp8
+    mov cx, 6
     mov ah, 3Fh
     int 21h
+    mov cx, 1
+    mov si, 0   ; I'm so sorry for using si as just a flag for cycle. I son't know why but it feels dirthy
 loadAmmo:
+    mov ah, 3Fh
+    int 21h
 closeFile:
     mov ah, 3Eh
     int 21h
