@@ -58,10 +58,26 @@ loadAmmoSpecs:
 loadAmmo:
     mov ah, 3Fh
     int 21h
+    jc closeFile
+    cmp si, 2
+    je skipComment
+    cmp temp8, 09h
+    jne addAndGoBack
+    inc si
+addAndGoBack:
+    mov [di], temp8
+    inc di
+    jmp loadAmmo
+skipComment:
+    cmp temp8, 0ah
+    jne loadAmmo
+    mov si, 0
+    jmp loadAmmo
 closeFile:
     mov ah, 3Eh
     int 21h
 exit:
+    lea si, drum
     mov byte ptr [di], '$'
     lea di, line
     mov [line+24], '$'
