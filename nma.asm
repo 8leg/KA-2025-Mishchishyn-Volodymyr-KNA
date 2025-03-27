@@ -79,22 +79,27 @@ closeFile:
     mov ah, 3Eh
     int 21h
 exit:
-    lea si, drum
+    ;lea si, drum
     mov byte ptr [di], '$'
-    lea di, line
-    mov [line+24], '$'
-    lea si, file
-    call print_message
-    lea si, line
-    call print_message
-    mov ax, 4C00h
-    int 21h
-
-print_message proc
-    mov dx, si
+    ;lea di, line
+    ;mov [line+24], '$'
+    ;lea si, file
+    ;call print_message
+    lea dx, drum
     mov ah, 09h
     int 21h
+    mov ax, 4C00h
+    int 21h
+print_message proc
+    mov dl, [si]
+    inc si
+    cmp dl, 0
+    cmp dl, 24h
+    jne notRet
     ret
+notRet:
+    mov ah, 02h
+    int 21h
 print_message endp
 
 end start
