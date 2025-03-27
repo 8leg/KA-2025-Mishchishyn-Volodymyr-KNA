@@ -58,14 +58,16 @@ loadAmmoSpecs:
 loadAmmo:
     mov ah, 3Fh
     int 21h
-    jc closeFile
+    cmp ax, 0
+    je closeFile
     cmp si, 2
     je skipComment
     cmp temp8, 09h
     jne addAndGoBack
     inc si
 addAndGoBack:
-    mov [di], temp8
+    mov al, temp8
+    mov [di], al
     inc di
     jmp loadAmmo
 skipComment:
