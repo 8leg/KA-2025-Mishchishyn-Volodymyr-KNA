@@ -1,11 +1,11 @@
 .model tiny
 .data
-    temp8 db ?  ; used for temp data
     templen db 8 dup(?)
-    line db 32768 dup (0)
-    drum db 31986 dup (0)   ; it's called drum, inspired by revolver drums. Used to store the commands. 31986 is the biggest possible size rules can have in NMA file
-    file db 11 dup(?)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
     len dw 0    ; lentght of line
+    file db 12 dup(?)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
+    line db 32769 dup (0)
+    drum db 16384 dup (0) ; it's called drum, inspired by revolver drums. Used to store the commands. 31986 is the biggest possible size rules can have in NMA file
+    temp8 db ?  ; used for temp data
 .code
 
 org 100h
@@ -54,7 +54,7 @@ loadAmmoSpecs:
     mov ah, 3Fh
     int 21h
     mov cx, 1
-    mov si, 0   ; I'm so sorry for using si as just a flag for cycle. I son't know why but it feels dirthy
+    mov si, 0   ; I'm so sorry for using si as just a flag for cycle. I don't know why but it feels dirthy
 loadAmmo:
     mov ah, 3Fh
     int 21h
@@ -80,12 +80,14 @@ closeFile:
     int 21h
 exit:
     ;lea si, drum
-    mov byte ptr [di], '$'
     ;lea di, line
     ;mov [line+24], '$'
     ;lea si, file
     ;call print_message
+    
+    ;mov byte ptr [di], '$'
     lea dx, drum
+    mov byte ptr [di], '$'
     mov ah, 09h
     int 21h
     mov ax, 4C00h
