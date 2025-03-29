@@ -76,18 +76,11 @@ skipComment:
     mov si, 0
     jmp loadAmmo
 closeFile:
+    mov byte ptr [di], '$'
     mov ah, 3Eh
     int 21h
 exit:
-    ;lea si, drum
-    ;lea di, line
-    ;mov [line+24], '$'
-    ;lea si, file
-    ;call print_message
-    
-    ;mov byte ptr [di], '$'
     lea dx, drum
-    mov byte ptr [di], '$'
     mov ah, 09h
     int 21h
     mov ax, 4C00h
