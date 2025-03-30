@@ -8,15 +8,12 @@
     temp16 dw 0
     temp8 db ?  ; used for temp data
 .code
-
 org 100h
-
 start:
     mov ax, 93D0h   ; memory stuff
     mov es, ax
     mov ax, 7000h
     mov ss, ax      ; give stack enough room to wiggle
-
     lea di, file
     mov si, 82h     ; 82 because there is two more useless symbols in memory as can be seen in dump
 getFilename:
@@ -101,7 +98,6 @@ closeFile:
     mov byte ptr [di+bx], '$'
     mov ah, 3Eh
     int 21h
-
 loadReady:
     mov di, len     ; starting from end
 loadStack:          ; loads es to the stack. Uses twice as much memory but I don't care
@@ -120,7 +116,6 @@ startOver:
     lea si, temp8   ; points at where the ammo is at
     xor cx, cx
     jmp selectAmmo
-
 selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
     inc bx
     cmp byte ptr [bx], 0
@@ -158,7 +153,7 @@ reWrite:
     sub di, cx
 writing_cycle:      ; time to switch to snake_case. Just for the hell of it
     mov ah, [bx]
-    mov [di], ah
+    mov es:[di], ah
     inc di
     jo bye
     inc bx
@@ -170,7 +165,7 @@ restore_line:       ; restores line from the stack. At least it should. Then sta
     cmp sp, 0ffffh
     jge loadReady_relay
     pop ax
-    mov [di], al
+    mov es:[di], al
     inc di
     jmp restore_line
 skipPayload:
@@ -184,10 +179,17 @@ skipPayload:
     je loadReady_relay
     jmp skipPayload
 bye:
-    lea dx, drum
-    mov ah, 09h
+    inc di
+    mov cx, di
+    mov si, 0
+    mov byte ptr es:[di-2], 0dh
+    mov byte ptr es:[di-1], 0ah
+printLoop:
+    mov dl, es:[si]
+    inc si
+    mov ah, 2h
     int 21h
+    loop printLoop
     mov ax, 4C00h
     int 21h
-
 end start
