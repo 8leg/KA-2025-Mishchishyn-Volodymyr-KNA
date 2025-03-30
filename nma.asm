@@ -102,21 +102,6 @@ closeFile:
     mov ah, 3Eh
     int 21h
 
-startOver:
-    lea bx, drum    ; points at position in the drum
-    lea si, temp8   ; points at where the ammo is at
-    xor cx, cx
-selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
-    inc bx
-    cmp byte ptr [bx-1], 0
-    je bye
-    cmp byte ptr [bx-1], 09h
-    je loadReady
-    mov al, byte ptr [bx-1]
-    mov byte ptr [si], al
-    inc cx
-    inc si
-    jmp selectAmmo
 loadReady:
     mov di, len     ; starting from end
 loadStack:          ; loads es to the stack. Uses twice as much memory but I don't care
@@ -127,7 +112,24 @@ loadStack:          ; loads es to the stack. Uses twice as much memory but I don
     cmp di, 0
     je nimbleByNimble
     jmp loadStack
-nimbleByNimble:
+startOver:
+    lea bx, drum    ; points at position in the drum
+    lea si, temp8   ; points at where the ammo is at
+    xor cx, cx
+selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
+    inc bx
+    cmp byte ptr [bx], 0
+    je bye
+    cmp byte ptr [bx-1], 09h
+    je loadReady
+    mov al, byte ptr [bx-1]
+    mov byte ptr [si], al
+    inc cx
+    inc si
+    jmp selectAmmo
+nimbleByNimble:     ; none are bind to here, but beware of stack. DI is pointer in ES
+    cmp di, len
+    jge skipPayload
     lea si, temp8
     pop ax
     mov byte ptr es:[di], al
@@ -136,13 +138,33 @@ nimbleByNimble:
     cmp di, cx
     jl nimbleByNimble
     push cx
+    push di
     sub di, cx
     repe cmpsb
     jz reWrite
+    pop di
     pop cx
     jmp nimbleByNimble
 reWrite:
-
+    pop di
+    pop cx
+    sub di, cx
+writing_cycle:      ; time to switch to snake_case. Just for the hell of it
+    mov [di], [bx]
+    inc di
+    jo bye
+    inc bx
+    cmp [bx], 09h
+    je restore_line
+    jmp writing_cycle
+restore_line:       ; restores line from the stack. At least it should. Then starts over
+    mov len, di
+    cmp sp, 0ffffh
+    jge loadReady
+    pop ax
+    mov [di], al
+    inc di
+    jmp restore_line
 bye:
     lea dx, drum
     mov ah, 09h
