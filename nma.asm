@@ -1,10 +1,9 @@
 .model tiny
 .data
     templen db 8 dup(?)
-    len dw 0    ; lentght of line
+    len dw 0    ; lentght of drum
     file db 12 dup(?)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
-    line db 32769 dup (0)
-    drum db 16384 dup (0) ; it's called drum, inspired by revolver drums. Used to store the commands. 31986 is the biggest possible size rules can have in NMA file
+    drum db 32769 dup (0)
     temp8 db ?  ; used for temp data
 .code
 
@@ -50,8 +49,12 @@ readLine:
     mov cx, ax
     mov len, ax
     mov ah, 3Fh
-    lea dx, line
+    lea dx, drum
     int 21h
+    mov cx, len
+    mov si, 0
+    lea di, drum
+    rep movsb
 loadAmmoSpecs:
     lea di, drum
     lea dx, temp8
@@ -84,7 +87,7 @@ closeFile:
     mov byte ptr [di], '$'
     mov ah, 3Eh
     int 21h
-    
+
 exit:
     lea dx, drum
     mov ah, 09h
