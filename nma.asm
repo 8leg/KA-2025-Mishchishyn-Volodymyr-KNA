@@ -56,6 +56,13 @@ readLine:
     mov si, 0
     lea di, drum
     rep movsb
+    mov cx, len
+clearDrum:
+    dec di
+    mov byte ptr [di], 0
+    cmp cx, 0
+    dec cx
+    jne clearDrum
 loadAmmoSpecs:
     lea di, drum
     lea dx, temp8
@@ -64,9 +71,11 @@ loadAmmoSpecs:
     int 21h
     mov cx, 1
     mov si, 0   ; I'm so sorry for using si as just a flag for cycle. I don't know why but it feels dirthy
-    mov bx, 0
+    jmp loadAmmo
+exit:           ; kind of a patchwork to not make long jumps....
+    mov ax, 4C00h
+    int 21h
 loadAmmo:
-    inc bx
     mov ah, 3Fh
     int 21h
     cmp ax, 0
@@ -88,22 +97,15 @@ skipComment:
     jmp loadAmmo
 closeFile:
     mov dlen, bx
-    mov byte ptr [di], '$'
+    mov byte ptr [di+bx], '$'
     mov ah, 3Eh
     int 21h
 
-
-
-
-
-
-exit:
     lea dx, drum
     mov ah, 09h
     int 21h
     mov ax, 4C00h
     int 21h
-
 
 print_message proc
     mov dl, [si]
