@@ -168,7 +168,7 @@ writing_cycle:      ; time to switch to snake_case. Just for the hell of it
 restore_line:       ; restores line from the stack. At least it should. Then starts over
     mov len, di
     cmp sp, 0ffffh
-    jge loadReady
+    jge loadReady_relay
     pop ax
     mov [di], al
     inc di
