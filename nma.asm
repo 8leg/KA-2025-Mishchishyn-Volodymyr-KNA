@@ -5,6 +5,7 @@
     dlen dw 0   ; len of a drum
     file db 12 dup(?)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
     drum db 32769 dup (0)
+    temp16 dw 0
     temp8 db ?  ; used for temp data
 .code
 
@@ -96,17 +97,62 @@ skipComment:
     mov si, 0
     jmp loadAmmo
 closeFile:
-    mov dlen, bx
     mov byte ptr [di+bx], '$'
     mov ah, 3Eh
     int 21h
 
+startOver:
+    lea bx, drum    ; points at position in the drum
+    lea si, temp8   ; points at where the ammo is at
+    xor cx, cx
+selectAmmo:
+    cmp byte ptr [bx], 0
+    je bye
+    cmp byte ptr [bx], 09h
+    inc bx
+    je seek
+    mov al, byte ptr [bx-1]
+    mov byte ptr [si], al
+    inc cx
+    inc si
+    jmp selectAmmo
+seek:
+    mov ax, cx
+    mov dx, len
+    sub dx, cx
+    mov di, 0
+    jmp aim
+steady:         ; why do I keep coming up with dumb names?
+    mov cx, ax
+    sub di, cx
+    inc di
+aim:
+    lea si, temp8
+    repe cmpsb
+    jz flush
+    jnz skipFire
+skipFire:
+    cmp byte ptr [bx], 09h
+    inc bx
+    je selectAmmo
+    jmp skipFire
+flush:
+    cmp word ptr [di], 0
+
+    push word ptr [di]
+    mov byte ptr [di], 0
+    inc di
+fire:
+    mov temp16, di
+
+
+
+bye:
     lea dx, drum
     mov ah, 09h
     int 21h
     mov ax, 4C00h
     int 21h
-
 print_message proc
     mov dl, [si]
     inc si
