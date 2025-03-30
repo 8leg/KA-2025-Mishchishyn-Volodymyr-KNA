@@ -11,6 +11,11 @@
 org 100h
 
 start:
+    mov ax, 93D0h   ; memory stuff
+    mov es, ax
+    mov ax, 7000h
+    mov ss, ax      ; give stack enough room to wiggle
+
     lea di, file
     mov si, 82h     ; 82 because there is two more useless symbols in memory as can be seen in dump
 getFilename:
@@ -79,12 +84,15 @@ closeFile:
     mov byte ptr [di], '$'
     mov ah, 3Eh
     int 21h
+    
 exit:
     lea dx, drum
     mov ah, 09h
     int 21h
     mov ax, 4C00h
     int 21h
+
+
 print_message proc
     mov dl, [si]
     inc si
