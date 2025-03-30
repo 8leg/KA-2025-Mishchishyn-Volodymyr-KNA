@@ -110,24 +110,29 @@ loadStack:          ; loads es to the stack. Uses twice as much memory but I don
     push ax
     mov byte ptr es:[di], 0
     cmp di, 0
-    je nimbleByNimble
-    jmp loadStack
+    jne loadStack
+    cmp temp16, 1234h   ; this is a switch so we can skip startOver
+    jne startOver
+    mov temp16, 0000h
+    jmp selectAmmo
 startOver:
     lea bx, drum    ; points at position in the drum
     lea si, temp8   ; points at where the ammo is at
     xor cx, cx
+    jmp selectAmmo
+
 selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
     inc bx
     cmp byte ptr [bx], 0
     je bye
     cmp byte ptr [bx-1], 09h
-    je loadReady
+    je bitByBit
     mov al, byte ptr [bx-1]
     mov byte ptr [si], al
     inc cx
     inc si
     jmp selectAmmo
-nimbleByNimble:     ; none are bind to here, but beware of stack. DI is pointer in ES
+bitByBit:           ; none are bind to here, but beware of stack. DI is pointer in ES
     cmp di, len
     jge skipPayload
     lea si, temp8
@@ -136,7 +141,7 @@ nimbleByNimble:     ; none are bind to here, but beware of stack. DI is pointer 
     inc di
     jo bye
     cmp di, cx
-    jl nimbleByNimble
+    jl bitByBit
     push cx
     push di
     sub di, cx
@@ -144,17 +149,20 @@ nimbleByNimble:     ; none are bind to here, but beware of stack. DI is pointer 
     jz reWrite
     pop di
     pop cx
-    jmp nimbleByNimble
+    jmp bitByBit
+loadReady_relay:
+    jmp loadReady
 reWrite:
     pop di
     pop cx
     sub di, cx
 writing_cycle:      ; time to switch to snake_case. Just for the hell of it
-    mov [di], [bx]
+    mov ah, [bx]
+    mov [di], ah
     inc di
     jo bye
     inc bx
-    cmp [bx], 09h
+    cmp byte ptr [bx], 09h
     je restore_line
     jmp writing_cycle
 restore_line:       ; restores line from the stack. At least it should. Then starts over
@@ -165,6 +173,16 @@ restore_line:       ; restores line from the stack. At least it should. Then sta
     mov [di], al
     inc di
     jmp restore_line
+skipPayload:
+    mov temp16, 1234h
+    lea si, temp8
+    xor cx, cx
+    inc bx
+    cmp byte ptr [bx], 0
+    je bye
+    cmp byte ptr [bx-1], 09h
+    je loadReady_relay
+    jmp skipPayload
 bye:
     lea dx, drum
     mov ah, 09h
