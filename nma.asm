@@ -105,56 +105,40 @@ startOver:
     lea bx, drum    ; points at position in the drum
     lea si, temp8   ; points at where the ammo is at
     xor cx, cx
-selectAmmo:
+selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
     cmp byte ptr [bx], 0
     je bye
     cmp byte ptr [bx], 09h
     inc bx
-    je seek
+    je loadReady
     mov al, byte ptr [bx-1]
     mov byte ptr [si], al
     inc cx
     inc si
     jmp selectAmmo
-seek:
-    mov ax, cx
-    mov dx, len
-    sub dx, cx
-    mov di, 0
-    jmp aim
-steady:         ; why do I keep coming up with dumb names?
-    mov cx, ax
-    sub di, cx
-    inc di
-aim:
-    cmp dx, 0
-    dec dx
+loadReady:
+    mov di, len     ; starting from end
+loadStack:          ; loads es to the stack. Uses twice as much memory but I don't care
+    mov al, byte ptr es:[di]
+    push ax
+    mov byte ptr es:[di], 0
+    cmp di, 0
+    je nimbleByNimble
+    dec di
+nimbleByNimble:
     lea si, temp8
-    repe cmpsb
-    mov temp16, di
-    jz flush
-    jnz skipFire
-skipFire:
-    cmp byte ptr [bx], 09h
-    inc bx
-    je selectAmmo
-    jmp skipFire
-flush:
-    cmp word ptr [di], 0
-    je trigger
-    push word ptr [di]
-    mov word ptr [di], 0
-    add di, 2
-    jmp flush
-trigger:
-    mov di, temp16
-    sub di, ax
-    mov temp16, bx
+    pop ax
+    mov byte ptr es:[di], al
+    cmp di, cx
+    inc di
+    jo bye
+    jl nimbleByNimble
     push cx
-paloadLen:
-    
-
-
+    sub di, cx
+    repe cmpsb
+    pop cx
+    jz reWrite
+    jnz nimbleByNimble
 
 
 bye:
