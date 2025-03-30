@@ -2,9 +2,9 @@
 .data
     templen db 8 dup(0)
     len dw 0    ; lentght of drum
-    dlen dw 0   ; len of a drum
-    file db 12 dup(0)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
+    file db 13 dup(0)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
     drum db 32769 dup (0)
+    dlen dw 0   ; len of a drum
     temp16 dw 0
     temp8 db ?  ; used for temp data
 .code
@@ -29,13 +29,14 @@ getFilename:
     inc di
     jmp getFilename
 openFile:
+    ;mov byte ptr [di], 24h
     mov al, 0
     lea dx, file
     mov ah, 3Dh
     int 21h
     jc exit
 readingSpecs:
-    xchg ax, bx
+    xchg bx, ax
     mov cx, 8
     lea dx, templen
     mov ah, 3Fh
@@ -54,13 +55,13 @@ readLine:
     lea dx, drum
     int 21h
     mov cx, len
-    mov si, 0
-    lea di, drum
+    lea si, drum
+    mov di, 0
     rep movsb
     mov cx, len
 clearDrum:
-    dec di
-    mov byte ptr [di], 0
+    dec si
+    mov byte ptr [si], 0
     cmp cx, 0
     dec cx
     jne clearDrum
@@ -139,7 +140,7 @@ nimbleByNimble:
     pop cx
     jz reWrite
     jnz nimbleByNimble
-
+reWrite:
 
 bye:
     lea dx, drum
