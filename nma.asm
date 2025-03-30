@@ -1,9 +1,9 @@
 .model tiny
 .data
-    templen db 8 dup(?)
+    templen db 8 dup(0)
     len dw 0    ; lentght of drum
     dlen dw 0   ; len of a drum
-    file db 12 dup(?)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
+    file db 12 dup(0)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
     drum db 32769 dup (0)
     temp16 dw 0
     temp8 db ?  ; used for temp data
@@ -127,8 +127,11 @@ steady:         ; why do I keep coming up with dumb names?
     sub di, cx
     inc di
 aim:
+    cmp dx, 0
+    dec dx
     lea si, temp8
     repe cmpsb
+    mov temp16, di
     jz flush
     jnz skipFire
 skipFire:
@@ -138,12 +141,19 @@ skipFire:
     jmp skipFire
 flush:
     cmp word ptr [di], 0
-
+    je trigger
     push word ptr [di]
-    mov byte ptr [di], 0
-    inc di
-fire:
-    mov temp16, di
+    mov word ptr [di], 0
+    add di, 2
+    jmp flush
+trigger:
+    mov di, temp16
+    sub di, ax
+    mov temp16, bx
+    push cx
+paloadLen:
+    
+
 
 
 
