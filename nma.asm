@@ -107,10 +107,10 @@ startOver:
     lea si, temp8   ; points at where the ammo is at
     xor cx, cx
 selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
-    cmp byte ptr [bx], 0
-    je bye
-    cmp byte ptr [bx], 09h
     inc bx
+    cmp byte ptr [bx-1], 0
+    je bye
+    cmp byte ptr [bx-1], 09h
     je loadReady
     mov al, byte ptr [bx-1]
     mov byte ptr [si], al
@@ -120,12 +120,13 @@ selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len 
 loadReady:
     mov di, len     ; starting from end
 loadStack:          ; loads es to the stack. Uses twice as much memory but I don't care
+    dec di
     mov al, byte ptr es:[di]
     push ax
     mov byte ptr es:[di], 0
     cmp di, 0
     je nimbleByNimble
-    dec di
+    jmp loadAmmo
 nimbleByNimble:
     lea si, temp8
     pop ax
