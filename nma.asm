@@ -126,21 +126,21 @@ loadStack:          ; loads es to the stack. Uses twice as much memory but I don
     mov byte ptr es:[di], 0
     cmp di, 0
     je nimbleByNimble
-    jmp loadAmmo
+    jmp loadStack
 nimbleByNimble:
     lea si, temp8
     pop ax
     mov byte ptr es:[di], al
-    cmp di, cx
     inc di
     jo bye
+    cmp di, cx
     jl nimbleByNimble
     push cx
     sub di, cx
     repe cmpsb
-    pop cx
     jz reWrite
-    jnz nimbleByNimble
+    pop cx
+    jmp nimbleByNimble
 reWrite:
 
 bye:
@@ -149,16 +149,5 @@ bye:
     int 21h
     mov ax, 4C00h
     int 21h
-print_message proc
-    mov dl, [si]
-    inc si
-    cmp dl, 0
-    cmp dl, 24h
-    jne notRet
-    ret
-notRet:
-    mov ah, 02h
-    int 21h
-print_message endp
 
 end start
