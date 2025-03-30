@@ -2,6 +2,7 @@
 .data
     templen db 8 dup(?)
     len dw 0    ; lentght of drum
+    dlen dw 0   ; len of a drum
     file db 12 dup(?)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
     drum db 32769 dup (0)
     temp8 db ?  ; used for temp data
@@ -63,7 +64,9 @@ loadAmmoSpecs:
     int 21h
     mov cx, 1
     mov si, 0   ; I'm so sorry for using si as just a flag for cycle. I don't know why but it feels dirthy
+    mov bx, 0
 loadAmmo:
+    inc bx
     mov ah, 3Fh
     int 21h
     cmp ax, 0
@@ -84,9 +87,15 @@ skipComment:
     mov si, 0
     jmp loadAmmo
 closeFile:
+    mov dlen, bx
     mov byte ptr [di], '$'
     mov ah, 3Eh
     int 21h
+
+
+
+
+
 
 exit:
     lea dx, drum
