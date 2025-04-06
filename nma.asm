@@ -47,8 +47,9 @@ clearDrum:
     dec si
     mov byte ptr [si], 0
     cmp cx, 0
+    je loadAmmoSpecs
     dec cx
-    jne clearDrum
+    jmp clearDrum
 loadAmmoSpecs:
     lea di, drum
     lea dx, temp8
