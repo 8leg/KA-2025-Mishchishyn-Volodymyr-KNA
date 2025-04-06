@@ -1,21 +1,20 @@
 .model tiny
-.data
-    stack_counter dw 0
-    templen db 8 dup(0)
-    len dw 0    ; lentght of drum
-    drum db 32769 dup (0)
-    temp16 dw 0
-    temp8 db ?  ; used for temp data
 .code
 ; this is just a note to self to remember where which variable is
-; stack_counter = 02B2
-; templen       = 02B4
-; len           = 02BC
-; drum          = 02BE
-; temp16        = 82BF
-; temp8         = 82C1
+; stack_counter = 009Ch word
+; templen       = 0090h
+; len           = 0099h word
+; drum          = 02BEh
+; temp16        = 009Eh word
+; temp8         = 82C1h
+; small variables are stored in an empty space after the file's name
+; huge drum and temp16 get themselves a big empty field at the start
 org 100h
 start:
+    mov cx, 0B200h  ; arbitrary giant number :3
+    mov di, 02BEh
+    xor al, al
+    rep stosb   ; clear room for a drum. Hope it doesn't break anything
     mov ax, 7001h   ; memory stuff
     mov es, ax
     mov ax, 7000h
@@ -29,29 +28,29 @@ openFile:
 readingSpecs:
     xchg bx, ax
     mov cx, 8
-    lea dx, templen
+    mov dx, 0090h
     mov ah, 3Fh
 readLen:
     int 21h
-    mov al, [templen+4]
-    cmp [templen+5], 0
+    mov al, ds:[0090h+4]
+    cmp byte ptr ds:[0090h+5], 0
     je readLine
-    mul [templen+5]
+    mul byte ptr ds:[0090h+5]
     jo exit ; overflow check
 readLine:
     cmp ax, 2
     je loadAmmoSpecs
     sub ax, 2
     mov cx, ax
-    mov len, ax
+    mov word ptr ds:[0099h], ax
     mov ah, 3Fh
-    lea dx, drum
+    mov dx, 02BEh
     int 21h
-    mov cx, len
-    lea si, drum
+    mov cx, word ptr ds:[0099h]
+    mov si, 02BEh
     mov di, 0
     rep movsb
-    mov cx, len
+    mov cx, word ptr ds:[0099h]
 clearDrum:
     dec si
     mov byte ptr [si], 0
@@ -60,8 +59,8 @@ clearDrum:
     dec cx
     jmp clearDrum
 loadAmmoSpecs:
-    lea di, drum
-    lea dx, temp8
+    mov di, 02BEh
+    mov dx, 82C1h
     mov cx, 6
     mov ah, 3Fh
     int 21h
@@ -78,16 +77,16 @@ loadAmmo:
     je closeFile
     cmp si, 2
     je skipComment
-    cmp temp8, 09h
+    cmp byte ptr ds:[82C1h], 09h
     jne addAndGoBack
     inc si
 addAndGoBack:
-    mov al, temp8
+    mov al, byte ptr ds:[82C1h]
     mov [di], al
     inc di
     jmp loadAmmo
 skipComment:
-    cmp temp8, 0ah
+    cmp byte ptr ds:[82C1h], 0ah
     jne loadAmmo
     mov si, 0
     jmp loadAmmo
@@ -95,30 +94,30 @@ closeFile:
     mov byte ptr [di+bx], '$'
     mov ah, 3Eh
     int 21h
-    lea bx, drum
+    mov bx, 02BEh
 loadReady:
     xor cx, cx
-    lea si, temp8
-    mov di, len     ; starting from end
+    mov si, 82C1h
+    mov di, word ptr ds:[0099h]     ; starting from end
     cmp di, 0
     je selectAmmo
 loadStack:          ; loads es to the stack. Uses twice as much memory but I don't care
     dec di
     mov al, byte ptr es:[di]
     push ax
-    inc stack_counter
+    inc word ptr ds:[009Ch]
     mov byte ptr es:[di], 0
     cmp di, 0
     jne loadStack
-    cmp temp16, 1234h   ; this is a switch so we can skip startOver
+    cmp word ptr ds:[009Eh], 1234h   ; this is a switch so we can skip startOver
     jne startOver
     jmp selectAmmo
 startOver:
-    lea bx, drum    ; points at position in the drum
-    lea si, temp8   ; points at where the ammo is loaded
+    mov bx, 02BEh    ; points at position in the drum
+    mov si, 82C1h   ; points at where the ammo is loaded
     xor cx, cx
 selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
-    mov temp16, 0000h
+    mov word ptr ds:[009Eh], 0000h
     inc bx
     cmp byte ptr [bx], 0
     je bye
@@ -132,11 +131,11 @@ selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len 
 bitByBit:           ; none are bind to here, but beware of stack. DI is pointer in ES
     cmp cx, 0
     je writing_cycle
-    cmp di, len
+    cmp di, word ptr ds:[0099h]
     jge skipPayload
-    lea si, temp8
+    mov si, 82C1h
     pop ax
-    dec stack_counter
+    dec word ptr ds:[009Ch]
     mov byte ptr es:[di], al
     inc di
     jo bye
@@ -151,7 +150,7 @@ bitByBit:           ; none are bind to here, but beware of stack. DI is pointer 
     pop cx
     jmp bitByBit
 loadReady_relay:
-    cmp temp16, 'tr'
+    cmp word ptr ds:[009Eh], 'tr'
     je bye
     jmp loadReady
 reWrite:
@@ -161,7 +160,7 @@ reWrite:
 writing_cycle:      ; time to switch to snake_case. Just for the hell of it
     cmp byte ptr [bx], 2eh
     jne continue
-    mov temp16, 'tr'
+    mov word ptr ds:[009Eh], 'tr'
     jmp restore_line
 continue:
     cmp byte ptr [bx], 09h
@@ -179,17 +178,17 @@ bye:
     mov si, 0
     jmp printLoop
 restore_line:       ; restores line from the stack. At least it should. Then starts over
-    mov len, di
-    cmp stack_counter, 0
+    mov word ptr ds:[0099h], di
+    cmp word ptr ds:[009Ch], 0
     je loadReady_relay
     pop ax
-    dec stack_counter
+    dec word ptr ds:[009Ch]
     mov es:[di], al
     inc di
     mov byte ptr es:[di], 0
     jmp restore_line
 skipPayload:
-    mov temp16, 1234h
+    mov word ptr ds:[009Eh], 1234h
     inc bx
     cmp byte ptr [bx], 0
     je bye
