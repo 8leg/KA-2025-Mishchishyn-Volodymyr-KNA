@@ -1,5 +1,6 @@
 .model tiny
 .data
+    stack_counter dw 0
     templen db 8 dup(0)
     len dw 0    ; lentght of drum
     drum db 32769 dup (0)
@@ -32,6 +33,8 @@ readLen:
     mul [templen+5]
     jo exit ; overflow check
 readLine:
+    cmp ax, 2
+    je loadAmmoSpecs
     sub ax, 2
     mov cx, ax
     mov len, ax
@@ -86,12 +89,18 @@ closeFile:
     mov byte ptr [di+bx], '$'
     mov ah, 3Eh
     int 21h
+    lea bx, drum
 loadReady:
+    xor cx, cx
+    lea si, temp8
     mov di, len     ; starting from end
+    cmp di, 0
+    je selectAmmo
 loadStack:          ; loads es to the stack. Uses twice as much memory but I don't care
     dec di
     mov al, byte ptr es:[di]
     push ax
+    inc stack_counter
     mov byte ptr es:[di], 0
     cmp di, 0
     jne loadStack
@@ -101,9 +110,8 @@ loadStack:          ; loads es to the stack. Uses twice as much memory but I don
     jmp selectAmmo
 startOver:
     lea bx, drum    ; points at position in the drum
-    lea si, temp8   ; points at where the ammo is at
+    lea si, temp8   ; points at where the ammo is loaded
     xor cx, cx
-    jmp selectAmmo
 selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
     inc bx
     cmp byte ptr [bx], 0
@@ -116,10 +124,13 @@ selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len 
     inc si
     jmp selectAmmo
 bitByBit:           ; none are bind to here, but beware of stack. DI is pointer in ES
+    cmp cx, 0
+    je writing_cycle
     cmp di, len
     jge skipPayload
     lea si, temp8
     pop ax
+    dec stack_counter
     mov byte ptr es:[di], al
     inc di
     jo bye
@@ -152,9 +163,10 @@ writing_cycle:      ; time to switch to snake_case. Just for the hell of it
     jmp writing_cycle
 restore_line:       ; restores line from the stack. At least it should. Then starts over
     mov len, di
-    cmp sp, 0ffffh
-    jge loadReady_relay
+    cmp stack_counter, 0
+    je loadReady_relay
     pop ax
+    dec stack_counter
     mov es:[di], al
     inc di
     jmp restore_line
@@ -163,8 +175,6 @@ bye:
     jmp printLoop
 skipPayload:
     mov temp16, 1234h
-    lea si, temp8
-    xor cx, cx
     inc bx
     cmp byte ptr [bx], 0
     je bye
