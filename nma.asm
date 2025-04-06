@@ -106,13 +106,13 @@ loadStack:          ; loads es to the stack. Uses twice as much memory but I don
     jne loadStack
     cmp temp16, 1234h   ; this is a switch so we can skip startOver
     jne startOver
-    mov temp16, 0000h
     jmp selectAmmo
 startOver:
     lea bx, drum    ; points at position in the drum
     lea si, temp8   ; points at where the ammo is loaded
     xor cx, cx
 selectAmmo:         ; bx is taken up as pointer to where the ammo is. cx is len of bullet. All stored in temp8, si is free
+    mov temp16, 0000h
     inc bx
     cmp byte ptr [bx], 0
     je bye
@@ -172,6 +172,7 @@ restore_line:       ; restores line from the stack. At least it should. Then sta
     jmp restore_line
 bye:
     mov si, 0
+    mov cx, di
     jmp printLoop
 skipPayload:
     mov temp16, 1234h
@@ -182,13 +183,11 @@ skipPayload:
     je loadReady_relay
     jmp skipPayload
 printLoop:
-    cmp byte ptr es:[si], 0h
-    je exiiiiiiiiiiiiiit
     mov dl, es:[si]
     inc si
     mov ah, 2h
     int 21h
-    jmp printLoop
+    loop printLoop
 exiiiiiiiiiiiiiit:
     mov dl, 0dh
     mov ah, 2h
