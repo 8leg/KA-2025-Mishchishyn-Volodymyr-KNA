@@ -153,7 +153,10 @@ reWrite:
 writing_cycle:      ; time to switch to snake_case. Just for the hell of it
     cmp byte ptr [bx], 2eh
     je bye
+    cmp byte ptr [bx], 09h
+    je restore_line
     mov ah, [bx]
+    cmp ah, 09h
     mov es:[di], ah
     inc di
     jo bye
