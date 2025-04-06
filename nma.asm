@@ -145,6 +145,8 @@ bitByBit:           ; none are bind to here, but beware of stack. DI is pointer 
     pop cx
     jmp bitByBit
 loadReady_relay:
+    cmp temp16, 'tr'
+    je bye
     jmp loadReady
 reWrite:
     pop di
@@ -152,7 +154,10 @@ reWrite:
     sub di, cx
 writing_cycle:      ; time to switch to snake_case. Just for the hell of it
     cmp byte ptr [bx], 2eh
-    je bye
+    jne continue
+    mov temp16, 'tr'
+    jmp restore_line
+continue:
     cmp byte ptr [bx], 09h
     je restore_line
     mov ah, [bx]
@@ -164,6 +169,10 @@ writing_cycle:      ; time to switch to snake_case. Just for the hell of it
     cmp byte ptr [bx], 09h
     je restore_line
     jmp writing_cycle
+bye:
+    mov si, 0
+    mov cx, di
+    jmp printLoop
 restore_line:       ; restores line from the stack. At least it should. Then starts over
     mov len, di
     cmp stack_counter, 0
@@ -173,10 +182,6 @@ restore_line:       ; restores line from the stack. At least it should. Then sta
     mov es:[di], al
     inc di
     jmp restore_line
-bye:
-    mov si, 0
-    mov cx, di
-    jmp printLoop
 skipPayload:
     mov temp16, 1234h
     inc bx
