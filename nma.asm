@@ -2,7 +2,6 @@
 .data
     templen db 8 dup(0)
     len dw 0    ; lentght of drum
-    file db 13 dup(0)       ; stores the name of a file that our batch script gave us. 11 because DOS allows only 8 sumbols+.nma
     drum db 32769 dup (0)
     dlen dw 0   ; len of a drum
     temp16 dw 0
@@ -14,21 +13,9 @@ start:
     mov es, ax
     mov ax, 7000h
     mov ss, ax      ; give stack enough room to wiggle
-    lea di, file
-    mov si, 82h     ; 82 because there is two more useless symbols in memory as can be seen in dump
-getFilename:
-    mov ax, ds:[si]
-    inc si
-    cmp al, 20h     ; those both set flags so why not do it like that?
-    cmp al, 0Dh     ; carriage return and space both deliminate (I know clever words) so yeah
-    je openFile
-    mov [di], ax
-    inc di
-    jmp getFilename
 openFile:
-    ;mov byte ptr [di], 24h
     mov al, 0
-    lea dx, file
+    mov dx, 82h
     mov ah, 3Dh
     int 21h
     jc exit
