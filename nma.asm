@@ -161,9 +161,9 @@ continue:
     cmp byte ptr [bx], 09h
     je restore_line
     mov ah, [bx]
-    cmp ah, 09h
     mov es:[di], ah
     inc di
+    mov byte ptr es:[di], 0
     jo bye
     inc bx
     cmp byte ptr [bx], 09h
@@ -171,7 +171,6 @@ continue:
     jmp writing_cycle
 bye:
     mov si, 0
-    mov cx, di
     jmp printLoop
 restore_line:       ; restores line from the stack. At least it should. Then starts over
     mov len, di
@@ -181,6 +180,7 @@ restore_line:       ; restores line from the stack. At least it should. Then sta
     dec stack_counter
     mov es:[di], al
     inc di
+    mov byte ptr es:[di], 0
     jmp restore_line
 skipPayload:
     mov temp16, 1234h
@@ -191,11 +191,14 @@ skipPayload:
     je loadReady_relay
     jmp skipPayload
 printLoop:
+    cmp di, 0
+    je exiiiiiiiiiiiiiit
     mov dl, es:[si]
     inc si
+    dec di
     mov ah, 2h
     int 21h
-    loop printLoop
+    jmp printLoop
 exiiiiiiiiiiiiiit:
     mov dl, 0dh
     mov ah, 2h
