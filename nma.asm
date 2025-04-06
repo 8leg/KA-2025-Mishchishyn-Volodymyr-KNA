@@ -139,6 +139,8 @@ reWrite:
     pop cx
     sub di, cx
 writing_cycle:      ; time to switch to snake_case. Just for the hell of it
+    cmp byte ptr [bx], 2eh
+    je bye
     mov ah, [bx]
     mov es:[di], ah
     inc di
@@ -155,6 +157,9 @@ restore_line:       ; restores line from the stack. At least it should. Then sta
     mov es:[di], al
     inc di
     jmp restore_line
+bye:
+    mov si, 0
+    jmp printLoop
 skipPayload:
     mov temp16, 1234h
     lea si, temp8
@@ -165,18 +170,21 @@ skipPayload:
     cmp byte ptr [bx-1], 09h
     je loadReady_relay
     jmp skipPayload
-bye:
-    inc di
-    mov cx, di
-    mov si, 0
-    mov byte ptr es:[di-2], 0dh
-    mov byte ptr es:[di-1], 0ah
 printLoop:
+    cmp byte ptr es:[si], 0h
+    je exiiiiiiiiiiiiiit
     mov dl, es:[si]
     inc si
     mov ah, 2h
     int 21h
-    loop printLoop
+    jmp printLoop
+exiiiiiiiiiiiiiit:
+    mov dl, 0dh
+    mov ah, 2h
+    int 21h
+    mov dl, 0ah
+    mov ah, 2h
+    int 21h
     mov ax, 4C00h
     int 21h
 end start
