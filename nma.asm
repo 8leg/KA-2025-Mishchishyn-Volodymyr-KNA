@@ -4,13 +4,19 @@
     templen db 8 dup(0)
     len dw 0    ; lentght of drum
     drum db 32769 dup (0)
-    dlen dw 0   ; len of a drum
     temp16 dw 0
     temp8 db ?  ; used for temp data
 .code
+; this is just a note to self to remember where which variable is
+; stack_counter = 02B2
+; templen       = 02B4
+; len           = 02BC
+; drum          = 02BE
+; temp16        = 82BF
+; temp8         = 82C1
 org 100h
 start:
-    mov ax, 93D0h   ; memory stuff
+    mov ax, 7001h   ; memory stuff
     mov es, ax
     mov ax, 7000h
     mov ss, ax      ; give stack enough room to wiggle
