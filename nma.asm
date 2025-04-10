@@ -91,10 +91,8 @@ skipComment:
     mov si, 0
     jmp loadAmmo
 closeFile:
-    mov byte ptr [di+bx], '$'
     mov ah, 3Eh
     int 21h
-    mov bx, 02BEh
 loadReady:
     xor cx, cx
     mov si, 82C1h
